@@ -30,11 +30,18 @@ odoo.define('pos_payment_terminal.pos_payment_terminal', function (require) {
                 }
             }
 
-            var data = {'amount' : line.get_amount(),
+            var data = {'amount' : this.pos.get_order().get_due(line),
                         'currency_iso' : currency_iso,
                         'payment_mode' : line.cashregister.journal.payment_mode};
-            //console.log(JSON.stringify(data));
-            this.message('payment_terminal_transaction_start', {'payment_info' : JSON.stringify(data)});
+            var ret = new $.Deferred();
+            console.log(JSON.stringify(data));
+            this.message('payment_terminal_transaction_start', {'payment_info' : JSON.stringify(data)})
+                .then(function(result){
+                    console.info("result="+bla);
+                    ret.resolve(result);
+                });
+            console.info("ret="+ret)
+            return ret;
         },
     });
 
@@ -46,7 +53,12 @@ odoo.define('pos_payment_terminal.pos_payment_terminal', function (require) {
 		    this.$('.paymentlines-container').unbind('click').on('click','.payment-terminal-transaction-start',function(event){
             // Why this "on" thing links severaltime the button to the action if I don't use "unlink" to reset the button links before ?
 			//console.log(event.target);
-			self.pos.proxy.payment_terminal_transaction_start($(this).data('cid'), self.pos.currency.name);
+			self.pos.proxy.payment_terminal_transaction_start(
+                            $(this).data('cid'), self.pos.currency.name).then(
+                                function(ret){
+                                    console.info("answer.amount_msg="+ret.answer.amount_msg);
+                                    console.info("answer.transaction_result="+ret.answer.transaction_result);
+                                });
 		    });
 
 	    },
